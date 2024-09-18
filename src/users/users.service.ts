@@ -5,6 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schemas';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
+import mongoose from 'mongoose';
+import { UserReq } from '../decorator/customize';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +17,15 @@ export class UsersService {
   hashPassword(password: string) {
     const salt = genSaltSync(10);
     return hashSync(password, salt);
+  }
+
+  checkUserId(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException({
+        message: 'Id không hợp lệ',
+        status: 400,
+      });
+    }
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -35,6 +46,8 @@ export class UsersService {
     return {
       message: 'Tạo tài khoản thành công',
       _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
     };
   }
 
@@ -42,12 +55,38 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  findOne(id: string) {
-    return this.userModel.findById(id);
+  async findOne(id: string) {
+    this.checkUserId(id);
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new BadRequestException({
+        message: 'Không tìm thấy user',
+        status: 404,
+      });
+    }
+    return {
+      message: 'Lấy thông tin user thành công',
+      id: user._id,
+      email: user.email,
+    };
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(updateUserDto: UpdateUserDto, @UserReq() user) {
+    this.checkUserId(updateUserDto._id);
+    const updateUser = await this.userModel.updateOne(
+      { _id: updateUserDto._id },
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
+    );
+    return {
+      message: 'Cập nhật thông tin user thành công',
+      updateUser,
+    };
   }
 
   remove(id: number) {

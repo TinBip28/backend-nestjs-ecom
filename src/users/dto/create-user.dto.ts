@@ -12,7 +12,7 @@ export class CreateUserDto {
   password: string;
 
   @IsNotEmpty({ message: 'Tuổi không được để trống' })
-  age: number;
+  age: number | undefined;
 
   gender: string;
 
