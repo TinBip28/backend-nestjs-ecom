@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+
+export type StoreDocument = HydratedDocument<Store>;
 
 @Schema({ timestamps: true })
 export class Store {
@@ -10,13 +12,22 @@ export class Store {
   address: string[];
 
   @Prop()
+  logo: string;
+
+  @Prop()
   description: string;
 
   @Prop()
   rating: number;
 
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User' })
+  owner: mongoose.Schema.Types.ObjectId[];
+
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User' })
+  staff: mongoose.Schema.Types.ObjectId[];
+
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Product' })
-  product: [];
+  product: mongoose.Schema.Types.ObjectId[];
 
   @Prop({ type: Object })
   createdBy: {

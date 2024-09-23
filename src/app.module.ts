@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
+import { ProductsResolver } from './products/products.resolver';
+import { ProductsModule } from './products/products.module';
 import * as mongooseDelete from 'mongoose-delete';
 
 @Module({
@@ -32,8 +34,9 @@ import * as mongooseDelete from 'mongoose-delete';
     UsersModule,
     AuthModule,
     StoresModule,
+    ProductsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ProductsResolver],
 })
 export class AppModule {}

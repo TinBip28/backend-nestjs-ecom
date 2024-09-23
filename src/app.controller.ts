@@ -3,6 +3,7 @@ import { LocalAuthGuard } from './auth/local-auth.guard';
 import { AuthService } from './auth/auth.service';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { GoogleAuthGuard } from './auth/google-auth.guard';
+import { Public } from './decorator/customize';
 
 @Controller()
 export class AppController {
@@ -10,6 +11,7 @@ export class AppController {
 
   @UseGuards(LocalAuthGuard)
   @Post('/login')
+  @Public()
   handleLogin(@Request() req) {
     return this.authService.login(req.user);
   }
@@ -20,12 +22,14 @@ export class AppController {
     return req.user;
   }
 
+  @Public()
   @Get('/login/google')
   @UseGuards(GoogleAuthGuard)
   async googleAuth() {
     return { message: 'Login with google' };
   }
 
+  @Public()
   @Get('/login/google/redirect')
   @UseGuards(GoogleAuthGuard)
   googleAuthRedirect(@Request() req) {

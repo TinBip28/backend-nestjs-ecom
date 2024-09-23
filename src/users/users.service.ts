@@ -7,6 +7,8 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import mongoose from 'mongoose';
 import { UserReq } from '../decorator/customize';
+import { IUser } from './users.interface';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class UsersService {
@@ -19,16 +21,17 @@ export class UsersService {
     return hashSync(password, salt);
   }
 
-  checkUserId(id: string) {
+  checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
         message: 'Id không hợp lệ',
         status: 400,
       });
     }
+    return null;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, @UserReq() user?: IUser) {
     const userExisted = await this.userModel.findOne({
       email: createUserDto.email,
     });
@@ -42,21 +45,49 @@ export class UsersService {
     const newUser = await this.userModel.create({
       ...createUserDto,
       password: hashPassword,
+      createdBy: {
+        _id: user._id,
+        email: user.email,
+      },
     });
     return {
       message: 'Tạo tài khoản thành công',
       _id: newUser._id,
       name: newUser.name,
       email: newUser.email,
+      createdBy: newUser.createdBy,
     };
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(currentPage: number, limit: number, qs: string) {
+    const { filter, sort, population } = aqp(qs);
+    delete filter.current;
+    delete filter.pageSize;
+    const offset = (+currentPage - 1) * +limit;
+    const defaultLimit = +limit ? +limit : 10;
+    const totalItems = (await this.userModel.find(filter)).length;
+    const totalPages = Math.ceil(totalItems / +limit);
+    const result = await this.userModel
+      .find(filter)
+      .limit(+limit)
+      .skip(offset)
+      .sort(sort as any)
+      .select('-password')
+      .populate(population)
+      .exec();
+    return {
+      meta: {
+        current: currentPage,
+        pageSize: defaultLimit,
+        pages: totalPages,
+        total: totalItems,
+      },
+      result,
+    };
   }
 
   async findOne(id: string) {
-    this.checkUserId(id);
+    this.checkValidId(id);
     const user = await this.userModel.findById(id);
     if (!user) {
       throw new BadRequestException({
@@ -71,8 +102,8 @@ export class UsersService {
     };
   }
 
-  async update(updateUserDto: UpdateUserDto, @UserReq() user) {
-    this.checkUserId(updateUserDto._id);
+  async update(updateUserDto: UpdateUserDto, @UserReq() user: IUser) {
+    this.checkValidId(updateUserDto._id);
     const updateUser = await this.userModel.updateOne(
       { _id: updateUserDto._id },
       {
@@ -89,15 +120,45 @@ export class UsersService {
     };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string, @UserReq() user: IUser) {
+    this.checkValidId(id);
+    if (user._id === id) {
+      throw new BadRequestException({ message: 'Không thể xóa chính mình' });
+    }
+    await this.userModel.updateOne(
+      { _id: id },
+      {
+        deletedBy: {
+          _id: user._id,
+          email: user.email,
+        },
+      },
+    );
+    return this.userModel.delete({ _id: id });
   }
 
-  findOneByUserName(username: string) {
-    return this.userModel.findOne({ email: username });
+  async findOneByUserName(email: string) {
+    const user = await this.userModel.findOne({ email: email });
+    if (!user) {
+      throw new BadRequestException({
+        message: 'Không tìm thấy user',
+        status: 404,
+      });
+    }
+    return {
+      message: 'Tạo tài khoản thành công',
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      createdBy: user.createdBy,
+    };
   }
 
-  checkUserPassword(password: string, hassPassword: string) {
-    return compareSync(password, hassPassword);
+  findOneByEmail(email: string) {
+    return this.userModel.findOne({ email: email });
+  }
+
+  checkUserPassword(password: string, hashPassword: string) {
+    return compareSync(password, hashPassword);
   }
 }

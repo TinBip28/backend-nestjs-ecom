@@ -17,7 +17,7 @@ export class AuthService {
    * @param pass
    */
   async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOneByUserName(username);
+    const user = await this.usersService.findOneByEmail(username);
     if (user) {
       const isValid = this.usersService.checkUserPassword(pass, user.password);
       if (isValid) {
@@ -46,6 +46,9 @@ export class AuthService {
     };
     return {
       access_token: this.jwtService.sign(payload),
+      _id,
+      name,
+      email,
     };
   }
 
@@ -64,7 +67,10 @@ export class AuthService {
       age: undefined,
       address: '',
     };
-    const user = await this.usersService.create(dataUser);
+    let user = await this.usersService.findOneByUserName(email);
+    if (!user) {
+      user = await this.usersService.create(dataUser);
+    }
     const payload = {
       sub: 'token login',
       iss: 'from server',
