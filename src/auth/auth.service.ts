@@ -71,16 +71,19 @@ export class AuthService {
     if (!user) {
       user = await this.usersService.create(dataUser);
     }
-    const payload = {
-      sub: 'token login',
-      iss: 'from server',
+    const payload: IUser = {
       _id: user._id,
-      email: user.email,
       name: user.name,
+      email: user.email,
+      role: 'user',
     };
+    await this.login(payload);
     return {
-      message: 'User information from google',
-      access_token: this.jwtService.sign(payload),
+      message: 'Đăng nhập bằng Google thành công',
     };
+  }
+
+  async register(user: CreateUserDto) {
+    return await this.usersService.register(user);
   }
 }

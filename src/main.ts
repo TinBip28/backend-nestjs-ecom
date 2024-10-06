@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import * as process from 'node:process';
 import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 async function bootstrap() {
@@ -12,11 +12,22 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
   const configService = app.get(ConfigService);
   app.useGlobalPipes(new ValidationPipe());
+
+  //Config cors
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
   });
+
+  //Config versioning
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: ['1', '2'],
+  });
+
+  //Config guard
   app.useGlobalGuards(new JwtAuthGuard(reflector));
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));

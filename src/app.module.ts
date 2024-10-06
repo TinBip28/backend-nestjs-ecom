@@ -6,9 +6,9 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
-import { ProductsResolver } from './products/products.resolver';
 import { ProductsModule } from './products/products.module';
-import * as mongooseDelete from 'mongoose-delete';
+import { FilesModule } from './files/files.module';
+import mongooseDelete from 'mongoose-delete';
 
 @Module({
   imports: [
@@ -35,8 +35,9 @@ import * as mongooseDelete from 'mongoose-delete';
     AuthModule,
     StoresModule,
     ProductsModule,
+    FilesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ProductsResolver],
+  providers: [AppService],
 })
 export class AppModule {}

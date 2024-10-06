@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, RegisterDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schemas';
@@ -15,21 +15,6 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
   ) {}
-
-  hashPassword(password: string) {
-    const salt = genSaltSync(10);
-    return hashSync(password, salt);
-  }
-
-  checkValidId(id: string) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException({
-        message: 'Id không hợp lệ',
-        status: 400,
-      });
-    }
-    return null;
-  }
 
   async create(createUserDto: CreateUserDto, @UserReq() user?: IUser) {
     const userExisted = await this.userModel.findOne({
@@ -82,7 +67,7 @@ export class UsersService {
         pages: totalPages,
         total: totalItems,
       },
-      result,
+      result: result,
     };
   }
 
@@ -97,8 +82,10 @@ export class UsersService {
     }
     return {
       message: 'Lấy thông tin user thành công',
-      id: user._id,
+      _id: user._id,
+      name: user.name,
       email: user.email,
+      address: user.address,
     };
   }
 
@@ -146,11 +133,29 @@ export class UsersService {
       });
     }
     return {
-      message: 'Tạo tài khoản thành công',
+      message: 'Tìm thấy user thành công !!!',
       _id: user._id,
       name: user.name,
       email: user.email,
       createdBy: user.createdBy,
+    };
+  }
+
+  async register(user: RegisterDto) {
+    const existedUser = await this.userModel.findOne({ email: user.email });
+    if (existedUser) {
+      throw new BadRequestException({
+        message: 'Email đã tồn tại',
+        status: 400,
+      });
+    }
+    const hashPassword = this.hashPassword(user.password);
+    const newUser = await this.userModel.create({
+      ...user,
+      password: hashPassword,
+    });
+    return {
+      newUser,
     };
   }
 
@@ -160,5 +165,20 @@ export class UsersService {
 
   checkUserPassword(password: string, hashPassword: string) {
     return compareSync(password, hashPassword);
+  }
+
+  hashPassword(password: string) {
+    const salt = genSaltSync(10);
+    return hashSync(password, salt);
+  }
+
+  checkValidId(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException({
+        message: 'Id không hợp lệ',
+        status: 400,
+      });
+    }
+    return null;
   }
 }

@@ -1,8 +1,10 @@
+import mongoose from 'mongoose';
+
 export interface IUser {
-  _id: string;
+  _id: string | mongoose.Types.ObjectId;
   name: string;
   email: string;
-  role: string;
+  role?: string;
 }
 
 export interface IUSerGoogle {
