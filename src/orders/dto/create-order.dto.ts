@@ -8,5 +8,5 @@ export class CreateOrderDto {
   };
 
   @IsNotEmpty({ message: 'Địa chỉ nhận hàng không được để trống' })
-  status: 'PROCESSING' | 'COMPLETED' | 'CANCELLED' | 'DELIVERED';
+  status: 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 }

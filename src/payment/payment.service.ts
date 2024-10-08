@@ -1,45 +1,56 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
-import { IUser } from '../users/users.interface';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { UserReq } from '../decorator/customize';
+import { IUser } from '../users/users.interface';
 import { InjectModel } from '@nestjs/mongoose';
-import { Order, OrderDocument } from './schemas/order.schemas';
+import { Payment, PaymentDocument } from './schemas/payment.schemas';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { Product, ProductDocument } from '../products/schemas/product.schemas';
+import { Order, OrderDocument } from '../orders/schemas/order.schemas';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
 
 @Injectable()
-export class OrdersService {
+export class PaymentService {
   constructor(
-    @InjectModel(Order.name) private orderModel: SoftDeleteModel<OrderDocument>,
+    @InjectModel(Payment.name)
+    private paymentModel: SoftDeleteModel<PaymentDocument>,
     @InjectModel(Product.name)
     private productModel: SoftDeleteModel<ProductDocument>,
+    @InjectModel(Order.name)
+    private orderModel: SoftDeleteModel<OrderDocument>,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto, @UserReq() user: IUser) {
-    const { products } = createOrderDto;
-    const product = await this.productModel.findById(products._id);
-    if (!product) {
-      throw new BadRequestException('Sản phẩm không tồn tại');
-    }
-    if (products.purchaseQuantity > product.quantity) {
-      return {
-        message: 'Số lượng sản phẩm không đủ',
-      };
-    }
-    const order = await this.orderModel.create({
-      ...createOrderDto,
-      status: 'PROCESSING',
+  async create(createPaymentDto: CreatePaymentDto, @UserReq() user: IUser) {
+    const { orderIds, taxPercentage, shippingFeePercentage } = createPaymentDto;
+    let totalPrice = 0;
+    let taxPrice = 0;
+    let shippingFee = 0;
+    orderIds.map(async (orderId) => {
+      const order = await this.orderModel.findOneAndUpdate(
+        { _id: orderId },
+        { status: 'SHIPPING' },
+      );
+      const { products } = order;
+      const product = await this.productModel.findById(products._id);
+      taxPrice = (taxPercentage / 100) * product.price;
+      shippingFee = taxPrice * (shippingFeePercentage / 100);
+      totalPrice += products.purchaseQuantity * product.price;
+    });
+    const payment = await this.paymentModel.create({
+      orderIds: orderIds,
+      taxPrice: taxPrice,
+      shippingFee: shippingFee,
+      totalAmount: totalPrice,
       createdBy: {
         _id: user._id,
         email: user.email,
       },
     });
     return {
-      message: 'Tạo đơn hàng thành công',
-      order,
+      message: 'Tạo thanh toán thành công',
+      payment,
     };
   }
 
@@ -69,31 +80,23 @@ export class OrdersService {
     };
   }
 
-  async findOne(id: string) {
+  findOne(id: string) {
     this.checkValidId(id);
-    const order = await this.orderModel.findById({ _id: id });
-    if (!order) {
-      throw new BadRequestException('Đơn hàng không tồn tại');
-    }
-    return order;
+    return this.paymentModel.findOne({ _id: id });
   }
 
   async update(
     id: string,
-    updateOrderDto: UpdateOrderDto,
+    updatePaymentDto: UpdatePaymentDto,
     @UserReq() user: IUser,
   ) {
     this.checkValidId(id);
-    const { status } = updateOrderDto;
-    if (status === 'CANCELLED' + '') {
-      return {
-        message: 'Đơn hàng đã bị hủy',
-      };
-    }
-    const updateOrder = await this.orderModel.updateOne(
-      { _id: id },
+    const updatedPayment = await this.paymentModel.updateOne(
       {
-        ...updateOrderDto,
+        _id: id,
+      },
+      {
+        ...updatePaymentDto,
         updatedBy: {
           _id: user._id,
           email: user.email,
@@ -101,14 +104,14 @@ export class OrdersService {
       },
     );
     return {
-      message: 'Cập nhật đơn hàng thành công',
-      updateOrder,
+      message: 'Cập nhật thanh toán thành công',
+      updatedPayment,
     };
   }
 
   async remove(id: string, @UserReq() user: IUser) {
     this.checkValidId(id);
-    await this.orderModel.updateOne(
+    await this.paymentModel.updateOne(
       { _id: id },
       {
         deletedBy: {
@@ -117,9 +120,7 @@ export class OrdersService {
         },
       },
     );
-    return this.orderModel.delete({
-      _id: id,
-    });
+    return this.paymentModel.delete({ _id: id });
   }
 
   checkValidId(id: string) {
@@ -130,9 +131,5 @@ export class OrdersService {
       });
     }
     return null;
-  }
-
-  async getOrderById(id: string) {
-    return this.orderModel.findById({ _id: id });
   }
 }
