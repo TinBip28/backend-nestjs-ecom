@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { ProductsModule } from './products/products.module';
 import { FilesModule } from './files/files.module';
+import { PaymentModule } from './payment/payment.module';
+import { OrdersModule } from './orders/orders.module';
 import mongooseDelete from 'mongoose-delete';
 
 @Module({
@@ -36,6 +38,8 @@ import mongooseDelete from 'mongoose-delete';
     StoresModule,
     ProductsModule,
     FilesModule,
+    PaymentModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

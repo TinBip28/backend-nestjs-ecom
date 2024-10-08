@@ -27,14 +27,6 @@ export class ProductsService {
   }
 
   async create(createProductDto: CreateProductDto, @UserReq() user: IUser) {
-    const isExist = await this.productModel.findOne({
-      name: createProductDto.name,
-    });
-    if (isExist) {
-      throw new BadRequestException({
-        message: 'Sản phẩm đã tồn tại',
-      });
-    }
     const newProduct = await this.productModel.create({
       ...createProductDto,
       createdBy: {

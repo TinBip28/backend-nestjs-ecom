@@ -7,6 +7,10 @@ export class CreateProductDto {
   @IsNotEmpty({ message: 'Mô tả sản phẩm không được để trống' })
   description: string;
 
+  @IsNotEmpty({ message: 'Vui lòng điền số lượng sản phẩm ' })
+  @IsNumber({}, { message: 'Số lượng sản phẩm phải là số' })
+  quantity: number;
+
   @IsNotEmpty({ message: 'Vui lòng nhập rating của sản phẩm' })
   @IsNumber({}, { message: 'Rating sản phẩm phải là số' })
   @Max(5, { message: 'Rating không được vượt quá 5' })
