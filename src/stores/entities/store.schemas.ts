@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import { User } from '../../users/schemas/user.schemas';
+import { Product } from '../../products/schemas/product.schemas';
 
 export type StoreDocument = HydratedDocument<Store>;
 
@@ -20,13 +22,13 @@ export class Store {
   @Prop()
   rating: number;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User' })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: User.name })
   owner: mongoose.Schema.Types.ObjectId[];
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'User' })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: User.name })
   staff: mongoose.Schema.Types.ObjectId[];
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Product' })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Product.name })
   product: mongoose.Schema.Types.ObjectId[];
 
   @Prop({ type: Object })

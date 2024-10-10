@@ -24,25 +24,18 @@ export class PaymentService {
 
   async create(createPaymentDto: CreatePaymentDto, @UserReq() user: IUser) {
     const { orderIds, taxPercentage, shippingFeePercentage } = createPaymentDto;
-    let totalPrice = 0;
-    let taxPrice = 0;
-    let shippingFee = 0;
-    orderIds.map(async (orderId) => {
-      const order = await this.orderModel.findOneAndUpdate(
-        { _id: orderId },
-        { status: 'SHIPPING' },
-      );
-      const { products } = order;
-      const product = await this.productModel.findById(products._id);
-      taxPrice = (taxPercentage / 100) * product.price;
-      shippingFee = taxPrice * (shippingFeePercentage / 100);
-      totalPrice += products.purchaseQuantity * product.price;
-    });
+    const { totalPrice, taxPrice, shippingFee } = await this.calculatePrice(
+      orderIds,
+      taxPercentage,
+      shippingFeePercentage,
+    );
     const payment = await this.paymentModel.create({
       orderIds: orderIds,
       taxPrice: taxPrice,
       shippingFee: shippingFee,
       totalAmount: totalPrice,
+      taxPercentage: taxPercentage,
+      shippingFeePercentage: shippingFeePercentage,
       createdBy: {
         _id: user._id,
         email: user.email,
@@ -60,9 +53,9 @@ export class PaymentService {
     delete filter.pageSize;
     const offset = (+currentPage - 1) * +limit;
     const defaultLimit = +limit ? +limit : 10;
-    const totalItems = (await this.productModel.find(filter)).length;
+    const totalItems = (await this.paymentModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / +limit);
-    const result = await this.productModel
+    const result = await this.paymentModel
       .find(filter)
       .limit(+limit)
       .skip(offset)
@@ -80,9 +73,13 @@ export class PaymentService {
     };
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     this.checkValidId(id);
-    return this.paymentModel.findOne({ _id: id });
+    const payment = await this.paymentModel.findOne({ _id: id });
+    if (!payment) {
+      console.error(`Payment with id ${id} not found`);
+    }
+    return payment;
   }
 
   async update(
@@ -90,13 +87,27 @@ export class PaymentService {
     updatePaymentDto: UpdatePaymentDto,
     @UserReq() user: IUser,
   ) {
-    this.checkValidId(id);
+    const payment = await this.findOne(id);
+    const { orderIds, taxPercentage, shippingFeePercentage } = updatePaymentDto;
+    const ids = orderIds ? orderIds : payment.orderIds;
+    const tax = !isNaN(taxPercentage) ? taxPercentage : payment.taxPercentage;
+    const shipping = !isNaN(shippingFeePercentage)
+      ? shippingFeePercentage
+      : payment.shippingFeePercentage;
+    const { totalPrice, taxPrice, shippingFee } = await this.calculatePrice(
+      ids,
+      tax,
+      shipping,
+    );
     const updatedPayment = await this.paymentModel.updateOne(
       {
         _id: id,
       },
       {
         ...updatePaymentDto,
+        taxPrice: taxPrice,
+        shippingFee: shippingFee,
+        totalAmount: totalPrice,
         updatedBy: {
           _id: user._id,
           email: user.email,
@@ -123,6 +134,10 @@ export class PaymentService {
     return this.paymentModel.delete({ _id: id });
   }
 
+  /**
+   * Kiểm tra id có hợp lệ không
+   * @param id
+   */
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
@@ -131,5 +146,43 @@ export class PaymentService {
       });
     }
     return null;
+  }
+
+  /**
+   * Tại đây không sử dụng map bởi vì map không chờ các thao tác này hoàn thành dẫn tới việc không cập nhật value cho giá tiền
+   *
+   * function tính toán số tiền cần thanh toán
+   *
+   * @returns totalPrice: number - tổng giá tiền
+   * @param orderIds
+   * @param taxPercentage
+   * @param shippingFeePercentage
+   */
+  async calculatePrice(
+    orderIds: Order[],
+    taxPercentage: number,
+    shippingFeePercentage: number,
+  ) {
+    let totalPrice = 0;
+    let taxPrice = 0;
+    let shippingFee = 0;
+    for (const orderId of orderIds) {
+      const order = await this.orderModel.findOne({ _id: orderId });
+      if (!order) {
+        throw new BadRequestException(`Đơn hàng ${order} không tồn tại`);
+      }
+      await this.orderModel.updateOne({ _id: orderId }, { status: 'SHIPPING' });
+      const { product } = order;
+      const item = await this.productModel.findOne({ _id: product._id });
+      taxPrice = (taxPercentage / 100) * item.price;
+      shippingFee = taxPrice * (shippingFeePercentage / 100);
+      totalPrice +=
+        product.purchaseQuantity * item.price + taxPrice + shippingFee;
+    }
+    return {
+      totalPrice,
+      taxPrice,
+      shippingFee,
+    };
   }
 }

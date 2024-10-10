@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { FilesModule } from './files/files.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrdersModule } from './orders/orders.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import mongooseDelete from 'mongoose-delete';
 
 @Module({
@@ -40,6 +41,7 @@ import mongooseDelete from 'mongoose-delete';
     FilesModule,
     PaymentModule,
     OrdersModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

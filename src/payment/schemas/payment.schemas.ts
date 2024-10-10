@@ -1,12 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { Order } from '../../orders/schemas/order.schemas';
+import { Store } from '../../stores/entities/store.schemas';
 
 export type PaymentDocument = HydratedDocument<Payment>;
 
 @Schema({ timestamps: true })
 export class Payment {
-  @Prop({ type: Object })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Store.name })
   storeId: {
     _id: mongoose.Schema.Types.ObjectId;
   };
@@ -22,6 +23,12 @@ export class Payment {
 
   @Prop()
   totalAmount: number;
+
+  @Prop()
+  taxPrice: number;
+
+  @Prop()
+  shippingFee: number;
 
   @Prop({ type: Object })
   createdBy: {

@@ -1,12 +1,14 @@
 import { IsNotEmpty } from 'class-validator';
 
 export class CreateOrderDto {
+  @IsNotEmpty({ message: 'Cửa hàng không được để trống' })
+  storeId: string;
+
   @IsNotEmpty({ message: 'Sản phẩm mua không được để trống' })
-  products: {
+  product: {
     _id: string;
     purchaseQuantity: number;
   };
 
-  @IsNotEmpty({ message: 'Địa chỉ nhận hàng không được để trống' })
   status: 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 }

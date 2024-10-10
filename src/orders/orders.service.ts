@@ -19,24 +19,30 @@ export class OrdersService {
   ) {}
 
   async create(createOrderDto: CreateOrderDto, @UserReq() user: IUser) {
-    const { products } = createOrderDto;
-    const product = await this.productModel.findById(products._id);
+    const { product, status } = createOrderDto;
+    const item = await this.productModel.findById(product._id);
     if (!product) {
       throw new BadRequestException('Sản phẩm không tồn tại');
     }
-    if (products.purchaseQuantity > product.quantity) {
+    if (product.purchaseQuantity > item.quantity) {
       return {
         message: 'Số lượng sản phẩm không đủ',
       };
     }
+
     const order = await this.orderModel.create({
       ...createOrderDto,
-      status: 'PROCESSING',
+      status: status || 'PROCESSING',
       createdBy: {
         _id: user._id,
         email: user.email,
       },
     });
+    await this.productModel.updateOne(
+      { _id: product._id },
+      { $inc: { quantity: -product.purchaseQuantity } },
+    );
+
     return {
       message: 'Tạo đơn hàng thành công',
       order,
@@ -49,9 +55,9 @@ export class OrdersService {
     delete filter.pageSize;
     const offset = (+currentPage - 1) * +limit;
     const defaultLimit = +limit ? +limit : 10;
-    const totalItems = (await this.productModel.find(filter)).length;
+    const totalItems = (await this.orderModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / +limit);
-    const result = await this.productModel
+    const result = await this.orderModel
       .find(filter)
       .limit(+limit)
       .skip(offset)
@@ -83,13 +89,7 @@ export class OrdersService {
     updateOrderDto: UpdateOrderDto,
     @UserReq() user: IUser,
   ) {
-    this.checkValidId(id);
-    const { status } = updateOrderDto;
-    if (status === 'CANCELLED' + '') {
-      return {
-        message: 'Đơn hàng đã bị hủy',
-      };
-    }
+    await this.findOne(id);
     const updateOrder = await this.orderModel.updateOne(
       { _id: id },
       {
@@ -100,6 +100,12 @@ export class OrdersService {
         },
       },
     );
+    if (updateOrderDto.status === 'CANCELLED') {
+      return {
+        message: 'Hủy đơn hàng thành công',
+        delete: await this.remove(id, user),
+      };
+    }
     return {
       message: 'Cập nhật đơn hàng thành công',
       updateOrder,
@@ -130,9 +136,5 @@ export class OrdersService {
       });
     }
     return null;
-  }
-
-  async getOrderById(id: string) {
-    return this.orderModel.findById({ _id: id });
   }
 }
