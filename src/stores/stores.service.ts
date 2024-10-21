@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Store, StoreDocument } from './entities/store.schemas';
+import { Store, StoreDocument } from './schemas/store.schemas';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { UserReq } from '../decorator/customize';
 import { IUser } from '../users/users.interface';

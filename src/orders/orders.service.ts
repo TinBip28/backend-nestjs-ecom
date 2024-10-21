@@ -137,4 +137,12 @@ export class OrdersService {
     }
     return null;
   }
+
+  findByUser(user: IUser) {
+    return this.orderModel.find({ userId: user._id }).sort('-createdAt');
+    /*.populate([
+      { path: 'companyId', select: { name: 1 } },
+      { path: 'jobId', select: { name: 1 } },
+    ]);*/
+  }
 }

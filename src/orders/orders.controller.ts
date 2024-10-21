@@ -24,6 +24,12 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto, user);
   }
 
+  @Post('/by-user')
+  @ResponseMessage('Lấy thông tin đơn hàng theo user')
+  getResumesByUser(@UserReq() user: IUser) {
+    return this.ordersService.findByUser(user);
+  }
+
   @Get()
   findAll(
     @Query('current') currentPage: string,

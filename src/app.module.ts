@@ -11,6 +11,8 @@ import { FilesModule } from './files/files.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrdersModule } from './orders/orders.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { RolesModule } from './roles/roles.module';
+import { DatabasesModule } from './databases/databases.module';
 import mongooseDelete from 'mongoose-delete';
 
 @Module({
@@ -42,6 +44,8 @@ import mongooseDelete from 'mongoose-delete';
     PaymentModule,
     OrdersModule,
     PermissionsModule,
+    RolesModule,
+    DatabasesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,5 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsMongoId, IsNotEmpty } from 'class-validator';
+import mongoose from 'mongoose';
 
 export class CreateOrderDto {
   @IsNotEmpty({ message: 'Cửa hàng không được để trống' })
@@ -9,6 +10,10 @@ export class CreateOrderDto {
     _id: string;
     purchaseQuantity: number;
   };
+
+  @IsNotEmpty({ message: 'UserId không được để trống' })
+  @IsMongoId({ message: 'UserId không đúng định dạng' })
+  userId: mongoose.Schema.Types.ObjectId;
 
   status: 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 }

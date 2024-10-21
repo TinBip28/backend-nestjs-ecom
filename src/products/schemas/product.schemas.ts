@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { Store } from '../../stores/entities/store.schemas';
 
 export type ProductDocument = HydratedDocument<Product>;
 
@@ -27,7 +26,7 @@ export class Product {
   @Prop()
   quantity: number;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Store.name })
+  @Prop({ type: mongoose.Schema.Types.ObjectId })
   storeID: mongoose.Schema.Types.ObjectId;
 
   @Prop({ type: Object })
