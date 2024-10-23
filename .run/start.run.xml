@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="start" type="js.build_tools.npm" nameIsGenerated="true">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="start" />
+    <node-interpreter value="project" />
+    <envs>
+      <env name="ACCESS_TOKEN_SECRET" value="NESTJS" />
+      <env name="ACCESS_TOKEN_EXPIRES_IN" value="5m" />
+      <env name="REFRESH_TOKEN_SECRET" value="NESTJS" />
+      <env name="MONGO_URL" value="mongodb+srv://quangtin_28:oHJ4oUhlLy2cdiF8@nestjs-basic.dhatl9h.mongodb.net/backend-nestjs" />
+      <env name="PORT" value="4000" />
+      <env name="REFRESH_TOKEN_EXPRIES_IN" value="100d" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

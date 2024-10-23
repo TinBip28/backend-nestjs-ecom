@@ -18,6 +18,9 @@ export class Product {
   price: number;
 
   @Prop()
+  discount: number | 0;
+
+  @Prop()
   type: string;
 
   @Prop()

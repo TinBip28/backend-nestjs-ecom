@@ -3,14 +3,12 @@ import { StoresService } from './stores.service';
 import { StoresController } from './stores.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Store, StoreSchema } from './schemas/store.schemas';
-import { UsersModule } from '../users/users.module';
 
 @Module({
   controllers: [StoresController],
   providers: [StoresService],
   imports: [
     MongooseModule.forFeature([{ name: Store.name, schema: StoreSchema }]),
-    UsersModule,
   ],
   exports: [StoresService],
 })

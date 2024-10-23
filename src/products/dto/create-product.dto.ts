@@ -18,4 +18,7 @@ export class CreateProductDto {
 
   @IsNotEmpty({ message: 'Vui lòng nhập giá của sản phẩm' })
   price: number;
+
+  @IsNotEmpty({ message: 'Vui lòng nhập cửa hàng của sản phẩm' })
+  storeID: string;
 }

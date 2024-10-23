@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
-import { Public, ResponseMessage } from '../decorator/customize';
+import { Public, ResponseMessage, UserReq } from '../decorator/customize';
+import { Request, Response } from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { IUser } from '../users/users.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -13,14 +15,14 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   @Public()
-  handleLogin(@Request() req) {
-    return this.authService.login(req.user);
+  handleLogin(@Req() req, @Res({ passthrough: true }) response: Response) {
+    return this.authService.login(req.user, response);
   }
 
   @ResponseMessage('Thông tin người dùng')
   @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
+  @Get('/profile')
+  getProfile(@Req() req: Request) {
     return req.user;
   }
 
@@ -36,14 +38,34 @@ export class AuthController {
   @Public()
   @Get('/login/google/redirect')
   @UseGuards(GoogleAuthGuard)
-  googleAuthRedirect(@Request() req) {
-    return this.authService.googleLogin(req.user);
+  googleAuthRedirect(
+    @Req() req,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.googleLogin(req.user, response);
   }
 
   @ResponseMessage('Đăng ký')
   @Public()
   @Post('/register')
-  async register(@Request() req) {
+  async register(@Req() req: Request) {
     return this.authService.register(req.body);
+  }
+
+  @Get('/account')
+  @ResponseMessage('Thông tin người dùng')
+  async getAccount(@UserReq() user: IUser) {
+    return { user };
+  }
+
+  @Public()
+  @Get('/refresh')
+  @ResponseMessage('Làm mới token')
+  refreshUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken = req.cookies['refresh_token'];
+    return this.authService.refresh(refreshToken, response);
   }
 }

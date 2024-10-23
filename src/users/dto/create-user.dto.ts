@@ -1,4 +1,20 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsObject,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import mongoose from 'mongoose';
+
+class Store {
+  @IsNotEmpty({ message: 'Tên cửa hàng không được để trống' })
+  name: string;
+
+  @IsNotEmpty({ message: 'Id không được để trống' })
+  _id: mongoose.Schema.Types.ObjectId;
+}
 
 export class CreateUserDto {
   @IsNotEmpty({ message: 'Tên người dùng không được để trống' })
@@ -18,6 +34,12 @@ export class CreateUserDto {
 
   @IsNotEmpty({ message: 'Địa chỉ không được để trống' })
   address: string;
+
+  @IsObject()
+  @ValidateNested()
+  @Type(() => Store)
+  @ValidateIf((object, value) => value !== null)
+  store?: Store | null;
 }
 
 export class RegisterDto {
@@ -33,8 +55,4 @@ export class RegisterDto {
 
   @IsNotEmpty({ message: 'Tuổi không được để trống' })
   age: number;
-
-  gender: string;
-
-  address: string;
 }

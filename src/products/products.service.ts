@@ -8,12 +8,15 @@ import { Product, ProductDocument } from './schemas/product.schemas';
 import { SoftDeleteModel } from 'mongoose-delete';
 import mongoose from 'mongoose';
 import aqp from 'api-query-params';
+import { Store, StoreDocument } from '../stores/schemas/store.schemas';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private productModel: SoftDeleteModel<ProductDocument>,
+    @InjectModel(Store.name)
+    private storeModel: SoftDeleteModel<StoreDocument>,
   ) {}
 
   checkValidId(id: string) {
@@ -34,6 +37,14 @@ export class ProductsService {
         email: user.email,
       },
     });
+    if (newProduct.storeID !== null) {
+      await this.storeModel.updateOne(
+        { _id: newProduct.storeID },
+        {
+          $push: { product: newProduct._id },
+        },
+      );
+    }
     return {
       message: 'Tạo sản phẩm thành công',
       _id: newProduct._id,

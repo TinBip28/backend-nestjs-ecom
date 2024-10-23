@@ -9,11 +9,13 @@ import mongoose from 'mongoose';
 import { UserReq } from '../decorator/customize';
 import { IUser } from './users.interface';
 import aqp from 'api-query-params';
+import { StoresService } from '../stores/stores.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
+    private storeService: StoresService,
   ) {}
 
   async create(createUserDto: CreateUserDto, @UserReq() user?: IUser) {
@@ -27,6 +29,10 @@ export class UsersService {
       });
     }
     const hashPassword = this.hashPassword(createUserDto.password);
+    if (createUserDto.store) {
+      const id = createUserDto.store._id.toString();
+      await this.storeService.findOne(id);
+    }
     const newUser = await this.userModel.create({
       ...createUserDto,
       password: hashPassword,
@@ -180,5 +186,19 @@ export class UsersService {
       });
     }
     return null;
+  }
+
+  async updateUserToken(
+    refreshToken: string,
+    _id: string | mongoose.Types.ObjectId,
+  ) {
+    return this.userModel.updateOne(
+      { _id: _id },
+      { refreshToken: refreshToken },
+    );
+  }
+
+  async findByToken(refreshToken: string) {
+    return this.userModel.findOne({ refreshToken: refreshToken });
   }
 }

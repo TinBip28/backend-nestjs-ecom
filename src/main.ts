@@ -6,6 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import cookieParser from 'cookie-parser';
+import { TransformInterceptor } from './core/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -27,10 +29,18 @@ async function bootstrap() {
     defaultVersion: ['1', '2'],
   });
 
+  //Enable cookie
+  app.use(cookieParser());
+
   //Config guard
   app.useGlobalGuards(new JwtAuthGuard(reflector));
+
+  //Config static file
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
+
+  //Interceptors
+  app.useGlobalInterceptors(new TransformInterceptor(reflector));
   await app.listen(configService.get<string>('PORT') || 3000);
 }
 
