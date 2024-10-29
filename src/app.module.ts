@@ -13,6 +13,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { DatabasesModule } from './databases/databases.module';
+import { MailModule } from './mail/mail.module';
 import mongooseDelete from 'mongoose-delete';
 
 @Module({
@@ -46,6 +47,7 @@ import mongooseDelete from 'mongoose-delete';
     PermissionsModule,
     RolesModule,
     DatabasesModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,10 +6,14 @@ import { Request, Response } from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { IUser } from '../users/users.interface';
+import { RolesService } from '../roles/roles.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private roleService: RolesService,
+  ) {}
 
   @ResponseMessage('Đăng nhập')
   @UseGuards(LocalAuthGuard)
@@ -55,6 +59,8 @@ export class AuthController {
   @Get('/account')
   @ResponseMessage('Thông tin người dùng')
   async getAccount(@UserReq() user: IUser) {
+    const temp = (await this.roleService.findOne(user.role._id)) as any;
+    user.permissions = temp.permissions;
     return { user };
   }
 
