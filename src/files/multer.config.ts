@@ -37,6 +37,7 @@ export class MulterConfigService implements MulterOptionsFactory {
     return {
       storage: diskStorage({
         destination: (req, file, cb) => {
+          //set location for storing files based on the folder type
           const folder = req?.headers?.folder_type ?? 'default';
           this.ensureExists(`public/images/${folder}`);
           cb(null, join(this.getRootPath(), `public/images/${folder}`));

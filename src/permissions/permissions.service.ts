@@ -26,9 +26,9 @@ export class PermissionsService {
       method: method,
     });
     if (isExisted) {
-      return {
-        message: 'Đường dẫn đã tồn tại',
-      };
+      throw new BadRequestException(
+        `Permission với ${apiPath} và ${method} đã tồn tại`,
+      );
     }
     const permission = await this.permissionModel.create({
       name,
@@ -119,7 +119,7 @@ export class PermissionsService {
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
-        message: 'Id không hợp lệ',
+        message: 'Id không hợp lệ vui lòng kiểm tra lại permission',
         status: 400,
       });
     }

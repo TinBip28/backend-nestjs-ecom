@@ -55,4 +55,10 @@ export class PaymentController {
   remove(@Param('id') id: string, @UserReq() user: IUser) {
     return this.paymentService.remove(id, user);
   }
+
+  @Post('/by-user')
+  @ResponseMessage('Lấy thông tin thanh toán theo user')
+  getOrderByUser(@UserReq() user: IUser) {
+    return this.paymentService.findByUser(user);
+  }
 }

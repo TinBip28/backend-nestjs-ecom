@@ -10,12 +10,15 @@ import { UserReq } from '../decorator/customize';
 import { IUser } from './users.interface';
 import aqp from 'api-query-params';
 import { StoresService } from '../stores/stores.service';
+import { Role, RoleDocument } from '../roles/schemas/role.schemas';
+import { USER_ROLE } from '../databases/sample';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: SoftDeleteModel<UserDocument>,
     private storeService: StoresService,
+    @InjectModel(Role.name) private roleModel: SoftDeleteModel<RoleDocument>,
   ) {}
 
   async create(createUserDto: CreateUserDto, @UserReq() user?: IUser) {
@@ -32,6 +35,9 @@ export class UsersService {
     if (createUserDto.store) {
       const id = createUserDto.store._id.toString();
       await this.storeService.findOne(id);
+    }
+    if (createUserDto.role!) {
+      createUserDto.role = await this.roleModel.findOne({ name: USER_ROLE });
     }
     const newUser = await this.userModel.create({
       ...createUserDto,
@@ -79,20 +85,13 @@ export class UsersService {
 
   async findOne(id: string) {
     this.checkValidId(id);
-    const user = await this.userModel.findById(id);
-    if (!user) {
-      throw new BadRequestException({
-        message: 'Không tìm thấy user',
-        status: 404,
+    return this.userModel
+      .findOne({ _id: id })
+      .select('-password')
+      .populate({
+        path: 'role',
+        select: { _id: 1, name: 1 },
       });
-    }
-    return {
-      message: 'Lấy thông tin user thành công',
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      address: user.address,
-    };
   }
 
   async update(updateUserDto: UpdateUserDto, @UserReq() user: IUser) {
@@ -114,9 +113,15 @@ export class UsersService {
   }
 
   async remove(id: string, @UserReq() user: IUser) {
-    this.checkValidId(id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return 'Not found';
+    }
     if (user._id === id) {
-      throw new BadRequestException({ message: 'Không thể xóa chính mình' });
+      throw new BadRequestException('Không thể xóa chính mình');
+    }
+    const userDelete = await this.userModel.findOne({ _id: id });
+    if (userDelete.email === 'admin@gmail.com') {
+      throw new BadRequestException('Không thể xóa admin');
     }
     await this.userModel.updateOne(
       { _id: id },
@@ -130,43 +135,36 @@ export class UsersService {
     return this.userModel.delete({ _id: id });
   }
 
-  async findOneByUserName(email: string) {
-    const user = await this.userModel.findOne({ email: email });
-    if (!user) {
-      throw new BadRequestException({
-        message: 'Không tìm thấy user',
-        status: 404,
-      });
-    }
-    return {
-      message: 'Tìm thấy user thành công !!!',
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      createdBy: user.createdBy,
-    };
-  }
-
   async register(user: RegisterDto) {
-    const existedUser = await this.userModel.findOne({ email: user.email });
-    if (existedUser) {
-      throw new BadRequestException({
-        message: 'Email đã tồn tại',
-        status: 400,
-      });
+    const { name, email, password, age, gender, address } = user;
+    const isExist = await this.userModel.findOne({ email: email });
+    if (isExist) {
+      throw new BadRequestException(`Email : ${email} này đã được sử dụng`);
     }
-    const hashPassword = this.hashPassword(user.password);
-    const newUser = await this.userModel.create({
-      ...user,
-      password: hashPassword,
+
+    const userRole = await this.roleModel.findOne({ name: USER_ROLE });
+
+    const hashedPassword = this.hashPassword(password);
+    return await this.userModel.create({
+      name,
+      email,
+      age,
+      gender,
+      address,
+      role: userRole._id,
+      password: hashedPassword,
     });
-    return {
-      newUser,
-    };
   }
 
-  findOneByEmail(email: string) {
-    return this.userModel.findOne({ email: email });
+  findOneByUsername(username: string) {
+    return this.userModel
+      .findOne({
+        email: username,
+      })
+      .populate({
+        path: 'role',
+        select: { name: 1 },
+      });
   }
 
   checkUserPassword(password: string, hashPassword: string) {
@@ -181,7 +179,7 @@ export class UsersService {
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
-        message: 'Id không hợp lệ',
+        message: 'Id không hợp lệ user',
         status: 400,
       });
     }
@@ -199,6 +197,9 @@ export class UsersService {
   }
 
   async findByToken(refreshToken: string) {
-    return this.userModel.findOne({ refreshToken: refreshToken });
+    return this.userModel.findOne({ refreshToken: refreshToken }).populate({
+      path: 'role',
+      select: { name: 1 },
+    });
   }
 }

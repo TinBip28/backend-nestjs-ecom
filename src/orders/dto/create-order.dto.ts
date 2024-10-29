@@ -15,5 +15,6 @@ export class CreateOrderDto {
   @IsMongoId({ message: 'UserId không đúng định dạng' })
   userId: mongoose.Schema.Types.ObjectId;
 
+  @IsNotEmpty({ message: 'Địa chỉ không được để trống' })
   status: 'PROCESSING' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
 }

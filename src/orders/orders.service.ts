@@ -25,11 +25,8 @@ export class OrdersService {
       throw new BadRequestException('Sản phẩm không tồn tại');
     }
     if (product.purchaseQuantity > item.quantity) {
-      return {
-        message: 'Số lượng sản phẩm không đủ',
-      };
+      throw new Error('Số lượng sản phẩm không đủ');
     }
-
     const order = await this.orderModel.create({
       ...createOrderDto,
       status: status || 'PROCESSING',
@@ -114,9 +111,16 @@ export class OrdersService {
 
   async remove(id: string, @UserReq() user: IUser) {
     this.checkValidId(id);
+    const order = await this.findOne(id);
+    const { product } = order;
+    await this.productModel.updateOne(
+      { _id: product._id },
+      { $inc: { quantity: product.purchaseQuantity } },
+    );
     await this.orderModel.updateOne(
       { _id: id },
       {
+        status: 'CANCELLED',
         deletedBy: {
           _id: user._id,
           email: user.email,
@@ -131,7 +135,7 @@ export class OrdersService {
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
-        message: 'Id không hợp lệ',
+        message: 'Id không hợp lệ order',
         status: 400,
       });
     }
@@ -139,10 +143,12 @@ export class OrdersService {
   }
 
   findByUser(user: IUser) {
-    return this.orderModel.find({ userId: user._id }).sort('-createdAt');
-    /*.populate([
-      { path: 'companyId', select: { name: 1 } },
-      { path: 'jobId', select: { name: 1 } },
-    ]);*/
+    return this.orderModel
+      .find({ userId: user._id })
+      .sort('-createdAt')
+      .populate([
+        { path: 'storeId', select: { name: 1 } },
+        { path: 'product', select: { name: 1 } },
+      ]);
   }
 }

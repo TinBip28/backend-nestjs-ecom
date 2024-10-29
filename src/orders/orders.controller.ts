@@ -26,7 +26,7 @@ export class OrdersController {
 
   @Post('/by-user')
   @ResponseMessage('Lấy thông tin đơn hàng theo user')
-  getResumesByUser(@UserReq() user: IUser) {
+  getOrderByUser(@UserReq() user: IUser) {
     return this.ordersService.findByUser(user);
   }
 

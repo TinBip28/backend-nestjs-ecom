@@ -1,11 +1,17 @@
 import {
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from '../decorator/customize';
+import { IS_PUBLIC_KEY, IS_PUBLIC_PERMISSION } from '../decorator/customize';
+
+type Tpermission = {
+  method: string;
+  apiPath: string;
+};
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -24,8 +30,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err, user, info) {
+  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
     // You can throw an exception based on either "info" or "err" arguments
+    const request = context.switchToHttp().getRequest();
+    const isSkipPermission = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_PERMISSION,
+      [context.getHandler(), context.getClass()],
+    );
     if (err || !user) {
       throw (
         err ||
@@ -33,6 +44,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
           message: 'Token không hợp lệ vui lòng đăng nhập lại',
           info: info,
         })
+      );
+    }
+    //check permission
+    const targetMethod = request.method;
+    const targetEndpoint = request.route?.path as string;
+
+    const permissions = user?.permissions ?? [];
+    let isExits = permissions.find(
+      (permission: Tpermission) =>
+        permission.method === targetMethod &&
+        permission.apiPath === targetEndpoint,
+    );
+
+    if (targetEndpoint.startsWith('/api/v1/auth')) isExits = true;
+    if (!isExits && !isSkipPermission) {
+      throw new ForbiddenException(
+        `Không có quyền truy cập endpoint ${targetMethod} ${targetEndpoint}`,
       );
     }
     return user;

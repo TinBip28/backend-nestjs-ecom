@@ -65,8 +65,8 @@ export class RolesService {
   }
 
   async findOne(id: string) {
-    this.checkValidId(id);
-    return (await this.roleModel.findById(id)).populate({
+    const newId = new mongoose.Types.ObjectId('67205990ee47a2e2cd964856');
+    return (await this.roleModel.findById(newId)).populate({
       path: 'permissions',
       select: { _id: 1, apiPath: 1, method: 1, module: 1 },
     });
@@ -111,8 +111,12 @@ export class RolesService {
 
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('Id không hợp lệ');
+      throw new BadRequestException('Id không hợp lệ role');
     }
     return null;
+  }
+
+  async findRoleByName(name: string) {
+    return this.roleModel.findOne({ name: name });
   }
 }

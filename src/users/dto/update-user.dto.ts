@@ -4,6 +4,6 @@ import { IsMongoId, IsNotEmpty } from 'class-validator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsNotEmpty({ message: 'Id phải tồn tại' })
-  @IsMongoId({ message: 'Id không hợp lệ' })
+  @IsMongoId({ message: 'Id không hợp lệ user' })
   _id: string;
 }

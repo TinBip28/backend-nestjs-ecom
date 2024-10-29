@@ -1,5 +1,6 @@
 import {
   IsEmail,
+  IsMongoId,
   IsNotEmpty,
   IsObject,
   ValidateIf,
@@ -30,6 +31,10 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Tuổi không được để trống' })
   age: number | undefined;
 
+  @IsNotEmpty({ message: 'Role không được để trống' })
+  @IsMongoId({ message: 'Role không đúng định dạng' })
+  role?: mongoose.Schema.Types.ObjectId;
+
   gender: string;
 
   @IsNotEmpty({ message: 'Địa chỉ không được để trống' })
@@ -38,7 +43,7 @@ export class CreateUserDto {
   @IsObject()
   @ValidateNested()
   @Type(() => Store)
-  @ValidateIf((object, value) => value !== null)
+  @ValidateIf((object, value) => value)
   store?: Store | null;
 }
 
@@ -55,4 +60,10 @@ export class RegisterDto {
 
   @IsNotEmpty({ message: 'Tuổi không được để trống' })
   age: number;
+
+  @IsNotEmpty({ message: 'Địa chỉ không được để trống' })
+  address: string;
+
+  @IsNotEmpty({ message: 'Giới tính không được để trống ' })
+  gender: string;
 }

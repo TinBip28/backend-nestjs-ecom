@@ -22,7 +22,7 @@ export class ProductsService {
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
-        message: 'Id không hợp lệ',
+        message: 'Id không hợp lệ product',
         status: 400,
       });
     }

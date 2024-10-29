@@ -30,6 +30,8 @@ export class PaymentService {
       shippingFeePercentage,
     );
     const payment = await this.paymentModel.create({
+      ...createPaymentDto,
+      userId: user._id,
       orderIds: orderIds,
       taxPrice: taxPrice,
       shippingFee: shippingFee,
@@ -77,7 +79,7 @@ export class PaymentService {
     this.checkValidId(id);
     const payment = await this.paymentModel.findOne({ _id: id });
     if (!payment) {
-      console.error(`Payment with id ${id} not found`);
+      throw new BadRequestException(`Đơn thanh toán ${id} không tồn tại`);
     }
     return payment;
   }
@@ -134,6 +136,10 @@ export class PaymentService {
     return this.paymentModel.delete({ _id: id });
   }
 
+  findByUser(user: IUser) {
+    return this.paymentModel.find({ userId: user._id }).sort('-createdAt');
+  }
+
   /**
    * Kiểm tra id có hợp lệ không
    * @param id
@@ -141,7 +147,7 @@ export class PaymentService {
   checkValidId(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException({
-        message: 'Id không hợp lệ',
+        message: 'Id không hợp lệ payment',
         status: 400,
       });
     }

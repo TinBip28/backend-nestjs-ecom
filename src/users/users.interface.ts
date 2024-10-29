@@ -4,7 +4,20 @@ export interface IUser {
   _id: string | mongoose.Types.ObjectId;
   name: string;
   email: string;
-  role?: string;
+  role: {
+    _id: string;
+    name: string;
+  };
+  permissions?: {
+    _id: string;
+    name: string;
+    apiPath: string;
+    module: string;
+  }[];
+  store?: {
+    _id: string;
+    name: string;
+  };
 }
 
 export interface IUSerGoogle {

@@ -20,10 +20,7 @@ export class UsersController {
 
   @ResponseMessage('Tạo người dùng mới')
   @Post()
-  create(
-    @Body() createUserDto: CreateUserDto,
-    @UserReq() user: IUser,
-  ): Promise<IUser> {
+  create(@Body() createUserDto: CreateUserDto, @UserReq() user: IUser) {
     return this.usersService.create(createUserDto, user);
   }
 
@@ -34,13 +31,13 @@ export class UsersController {
     @Query('current') currentPage: string,
     @Query('pageSize') limit: string,
     @Query() qs: string,
-  ): Promise<{ meta: any; result: IUser[] }> {
+  ) {
     return this.usersService.findAll(+currentPage, +limit, qs);
   }
 
   @ResponseMessage('Lấy thông tin người dùng theo id')
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<IUser> {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 

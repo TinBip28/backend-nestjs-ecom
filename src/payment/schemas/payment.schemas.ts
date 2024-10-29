@@ -16,6 +16,9 @@ export class Payment {
   orderIds: Order[];
 
   @Prop()
+  userId: mongoose.Schema.Types.ObjectId;
+
+  @Prop()
   taxPercentage: number;
 
   @Prop()
